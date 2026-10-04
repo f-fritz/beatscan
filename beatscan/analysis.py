@@ -118,7 +118,7 @@ class Analysis:
     signal: str = ""
     whole_loop: bool | None = None
     loop_seamless: bool | None = None
-    implied_bpm: float | None = None
+    bpm: float | None = None
     reason: str = ""
     # Debug information for plots.
     k_detected: int | None = None
@@ -327,7 +327,7 @@ def analyze(motion: np.ndarray, brightness: np.ndarray, fps: float, params: Para
         return Analysis(
             "rhythmic", beats=beats, confidence=best.confidence, alt_beats=alts,
             character=character(m, best.k), signal=best.name, whole_loop=True,
-            loop_seamless=seamless, implied_bpm=beats * 60.0 / duration,
+            loop_seamless=seamless, bpm=beats * 60.0 / duration,
             k_detected=best.k, candidates=cands, signals=signals,
         )
 
@@ -352,14 +352,14 @@ def analyze(motion: np.ndarray, brightness: np.ndarray, fps: float, params: Para
             return Analysis(
                 "rhythmic", beats=beats, confidence=peak, alt_beats=alts,
                 character=character(m, k), signal=name, whole_loop=True,
-                loop_seamless=seamless, implied_bpm=beats * 60.0 / duration,
+                loop_seamless=seamless, bpm=beats * 60.0 / duration,
                 k_detected=k, candidates=cands, signals=signals, acf=ac, acf_lag=lag,
             )
         beats = fit_bpm_range(cycles, duration, params)
         return Analysis(
             "rhythmic_partial", beats=round(beats, 2), confidence=peak,
             character=character(m), signal=name, whole_loop=False,
-            loop_seamless=seamless, implied_bpm=beats * 60.0 / duration,
+            loop_seamless=seamless, bpm=beats * 60.0 / duration,
             k_detected=best.k, signals=signals, acf=ac, acf_lag=lag,
         )
 

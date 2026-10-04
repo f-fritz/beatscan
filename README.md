@@ -16,7 +16,7 @@ pip install -e '.[plots,test]'  # + matplotlib for --plots, pytest
 ```sh
 beatscan <directory> [options]       # or: python -m beatscan <directory>
 
-  -o, --output PATH        Report path (default: ./beatscan.csv)
+  -o, --output PATH        Report path (default: ./beatscan_<directory name>.csv)
   --ext LIST               Extensions to scan (default: mov,mp4,avi,mkv,webm,m4v)
   --workers N              Parallel workers (default: CPU count - 1)
   --min-confidence FLOAT   Threshold for the "rhythmic" flag (default: 0.5)
@@ -27,7 +27,7 @@ beatscan <directory> [options]       # or: python -m beatscan <directory>
   --plots DIR              Write one debug plot per clip into DIR
 ```
 
-The directory is scanned recursively. Decoded signals are cached in `<report>.cache.json` next to the report, keyed by path, size and mtime. Re-runs only decode new or changed clips, and changing analysis options does not force a re-decode.
+The directory is scanned recursively. Scanning `clips/` writes `beatscan_clips.csv` by default. Decoded signals are cached in `<report>.cache.json` next to the report, keyed by path, size and mtime. Re-runs only decode new or changed clips, and changing analysis options does not force a re-decode.
 
 When a result looks wrong, run with `--plots DIR` and open that clip's PNG. It shows the motion and brightness signals with the reported beat grid, the cycles-per-clip spectrum, and the candidate scores with their implied BPM.
 
@@ -38,6 +38,7 @@ When a result looks wrong, run with `--plots DIR` and open that clip's PNG. It s
 | `path` | Path relative to the scanned directory |
 | `status` | `rhythmic`, `rhythmic_partial`, `non_rhythmic`, `static`, `skipped`, `error` |
 | `beats` | Beats in the clip. Integer for `rhythmic`, fractional for `rhythmic_partial` |
+| `bpm` | Tempo at which the loop plays at its native speed: `beats × 60 / duration_s` |
 | `confidence` | 0–1. Spectral periodicity for whole loops, autocorrelation peak for the fallback |
 | `alt_beats` | Other plausible beat counts inside the BPM window, `;`-separated |
 | `character` | `cuts` (a few sharp spikes dominate the motion) or `pulse` (smooth variation) |
@@ -45,7 +46,6 @@ When a result looks wrong, run with `--plots DIR` and open that clip's PNG. It s
 | `whole_loop` | `true` if the clip spans a whole number of beats |
 | `loop_seamless` | `true` if the last→first frame jump is no bigger than jumps inside the clip |
 | `duration_s`, `fps`, `frames` | Clip properties; duration = decoded frames / fps |
-| `implied_bpm` | Sanity check only, not a result |
 | `codec` | Video codec reported by ffprobe |
 | `error` | ffmpeg error text, or the reason a clip was skipped |
 
@@ -79,7 +79,7 @@ pytest
 
 ## Known limitations
 
-- **Half/double ambiguity is musical, not visual.** A clip pulsing 8 times could be 8, 16 or 4 beats. The BPM window picks one, so a clip actually made at 60 or 240 BPM is reported at the octave that fits 80–180. Check `implied_bpm` and `alt_beats`, or narrow `--bpm-range` for a set of clips you know.
+- **Half/double ambiguity is musical, not visual.** A clip pulsing 8 times could be 8, 16 or 4 beats. The BPM window picks one, so a clip actually made at 60 or 240 BPM is reported at the octave that fits 80–180. Check `bpm` and `alt_beats`, or narrow `--bpm-range` for a set of clips you know.
 - **Back-and-forth motion counts double.** Frame differences have no direction, so a pendulum produces two motion pulses per swing. The BPM window usually absorbs this as an octave.
 - **No visual rhythm, no answer.** One-shot animations (a single rise and fall), slow morphs and very irregular bursts come out `non_rhythmic`, even if the creator cut them to 16 beats. Lowering `--min-confidence` admits more of them, at the cost of false positives.
 - **Slow swells dominate.** When a clip's main movement is a 2-cycle swell, the beat count comes from that swell scaled into the BPM window, not from faster detail on top of it.

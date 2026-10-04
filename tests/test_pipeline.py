@@ -115,3 +115,19 @@ def test_max_duration_skips(tmp_path):
     assert cli.main([str(clips), "-o", str(report), "--max-duration", "5", "--workers", "1"]) == 0
     row = next(csv.DictReader(open(report)))
     assert row["status"] == "skipped"
+
+
+def _has_encoder(name):
+    out = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
+    return any(line.split()[1:2] == [name] for line in out.splitlines() if line.strip())
+
+
+@pytest.mark.skipif(not _has_encoder("dxv"), reason="ffmpeg built without the DXV encoder")
+@pytest.mark.parametrize("frames, beats", [(flashes(16), 16), (moving_shape(4), 4), (sine_pulse(8), 8)])
+def test_dxv3_clip(tmp_path, frames, beats):
+    rgba = np.repeat(frames[..., None], 4, axis=3)
+    rgba[..., 3] = 255
+    path = encode(tmp_path / "d.mov", rgba, "rgba", ("-c:v", "dxv", "-format", "dxt1"))
+    assert probe(str(path)).codec == "dxv"
+    a = scan(path)
+    assert (a.status, a.beats) == ("rhythmic", beats)

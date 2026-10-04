@@ -13,8 +13,8 @@ from .analysis import Analysis
 CACHE_VERSION = 1
 
 COLUMNS = [
-    "path", "status", "beats", "confidence", "alt_beats", "character", "signal",
-    "whole_loop", "loop_seamless", "duration_s", "fps", "frames", "implied_bpm",
+    "path", "status", "beats", "bpm", "confidence", "alt_beats", "character", "signal",
+    "whole_loop", "loop_seamless", "duration_s", "fps", "frames",
     "codec", "error",
 ]
 STATUS_ORDER = ["rhythmic", "rhythmic_partial", "non_rhythmic", "static", "skipped", "error"]
@@ -87,6 +87,7 @@ def make_row(rel: str, a: Analysis, probe: dict | None, frames: int | None, erro
         "path": rel,
         "status": a.status,
         "beats": _fmt(beats, 2),
+        "bpm": _fmt(a.bpm, 1),
         "confidence": _fmt(round(a.confidence, 3)) if a.status not in ("static", "skipped", "error") else "",
         "alt_beats": ";".join(str(k) for k in a.alt_beats),
         "character": a.character,
@@ -96,7 +97,6 @@ def make_row(rel: str, a: Analysis, probe: dict | None, frames: int | None, erro
         "duration_s": _fmt(duration, 3),
         "fps": _fmt(fps, 3),
         "frames": _fmt(frames),
-        "implied_bpm": _fmt(a.implied_bpm, 1),
         "codec": (probe or {}).get("codec", ""),
         "error": error or a.reason,
     }

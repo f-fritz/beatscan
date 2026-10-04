@@ -21,7 +21,8 @@ DEFAULT_EXT = "mov,mp4,avi,mkv,webm,m4v"
 def parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="beatscan", description="Count beats per loop in VJ clips.")
     p.add_argument("directory", type=Path)
-    p.add_argument("-o", "--output", type=Path, default=Path("beatscan.csv"), help="report path")
+    p.add_argument("-o", "--output", type=Path,
+                   help="report path (default: ./beatscan_<directory name>.csv)")
     p.add_argument("--ext", default=DEFAULT_EXT, help=f"extensions to scan (default: {DEFAULT_EXT})")
     p.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     p.add_argument("--min-confidence", type=float, default=Params.min_confidence)
@@ -83,7 +84,7 @@ def main(argv=None) -> int:
         print(f"No clips with extensions {args.ext} under {root}", file=sys.stderr)
         return 1
 
-    output = args.output.resolve()
+    output = (args.output or Path(f"beatscan_{root.name}.csv")).resolve()
     cache = Cache(output.with_name(output.stem + ".cache.json"), enabled=not args.no_cache)
     params = Params(min_confidence=args.min_confidence, tolerance=args.tolerance,
                     bpm_min=args.bpm[0], bpm_max=args.bpm[1])

@@ -67,7 +67,7 @@ def test_bpm_window_doubles_slow_pulse():
     # 8 flashes over 8 s is 60 BPM; 16 beats (120 BPM) is the plausible reading.
     a = run(flashes(8, period=30))
     assert (a.status, a.beats) == ("rhythmic", 16)
-    assert a.implied_bpm == pytest.approx(120)
+    assert a.bpm == pytest.approx(120)
 
 
 def test_bpm_window_can_be_moved():
