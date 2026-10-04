@@ -12,9 +12,11 @@ dependencies = ["numpy"]
 [project.optional-dependencies]
 plots = ["matplotlib"]
 test = ["pytest"]
+notebook = ["matplotlib", "nbformat", "nbclient", "ipykernel"]
 
 [project.scripts]
 beatscan = "beatscan.cli:main"
+beatscan-explain = "beatscan.explain:main"
 
 [tool.setuptools]
 packages = ["beatscan"]

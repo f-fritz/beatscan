@@ -131,3 +131,25 @@ def test_dxv3_clip(tmp_path, frames, beats):
     assert probe(str(path)).codec == "dxv"
     a = scan(path)
     assert (a.status, a.beats) == ("rhythmic", beats)
+
+
+def test_explain_notebook(tmp_path):
+    from beatscan import explain
+
+    clip = encode(tmp_path / "flash8.mkv", flashes(8))
+    out = tmp_path / "nb.ipynb"
+    args = [str(clip), "-o", str(out)]
+    try:
+        import nbclient  # noqa: F401
+        import ipykernel  # noqa: F401
+    except ImportError:
+        args.append("--no-execute")
+    assert explain.main(args) == 0
+    nb = json.loads(out.read_text())
+    code = [c for c in nb["cells"] if c["cell_type"] == "code"]
+    assert len(code) >= 7
+    if "--no-execute" not in args:
+        outputs = [o for c in code for o in c["outputs"]]
+        assert not [o for o in outputs if o["output_type"] == "error"]
+        text = "".join("".join(o.get("text", "")) for o in outputs)
+        assert "beats          8" in text

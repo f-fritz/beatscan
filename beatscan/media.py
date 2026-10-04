@@ -106,13 +106,15 @@ def probe(path: str) -> Probe:
     )
 
 
-def decode_signals(path: str, alpha: bool = False) -> tuple[np.ndarray, np.ndarray, str]:
-    """Stream tiny grey frames from ffmpeg into motion/brightness signals.
+def decode_frames(path: str, alpha: bool = False, width: int = WIDTH, height: int = HEIGHT,
+                  stderr_out: list[str] | None = None):
+    """Yield grey uint8 frames of shape (height, width), streamed from ffmpeg.
 
-    Returns (motion, brightness, stderr_text). Frames are read one at a time
-    from the pipe, never buffered as a whole.
+    Frames are read one at a time from the pipe, never buffered as a whole.
+    Raises MediaError once the stream ends if ffmpeg failed. Any ffmpeg
+    stderr text is appended to `stderr_out`.
     """
-    vf = f"scale={WIDTH}:{HEIGHT}:flags=area,format=gray"
+    vf = f"scale={width}:{height}:flags=area,format=gray"
     if alpha:
         # Composite over black: premultiplying by alpha is exactly that.
         vf = "format=rgba,premultiply=inplace=1," + vf
@@ -120,8 +122,8 @@ def decode_signals(path: str, alpha: bool = False) -> tuple[np.ndarray, np.ndarr
         "ffmpeg", "-nostdin", "-v", "error", "-i", path, "-an", "-sn", "-dn",
         "-vf", vf, "-fps_mode", "passthrough", "-f", "rawvideo", "-",
     ]
-    frame_size = WIDTH * HEIGHT
-    builder = SignalBuilder()
+    frame_size = width * height
+    count = 0
     with tempfile.TemporaryFile() as err:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=err)
         try:
@@ -129,18 +131,32 @@ def decode_signals(path: str, alpha: bool = False) -> tuple[np.ndarray, np.ndarr
                 buf = proc.stdout.read(frame_size)
                 if len(buf) < frame_size:
                     break
-                builder.add(np.frombuffer(buf, dtype=np.uint8).reshape(HEIGHT, WIDTH))
+                count += 1
+                yield np.frombuffer(buf, dtype=np.uint8).reshape(height, width)
         finally:
             proc.stdout.close()
             rc = proc.wait()
         err.seek(0)
         stderr = err.read().decode("utf-8", "replace").strip()
+    if stderr and stderr_out is not None:
+        stderr_out.append(stderr)
     if rc != 0:
         raise MediaError(f"ffmpeg exit {rc}: {stderr[-500:] or 'no output'}")
-    if len(builder) == 0:
+    if count == 0:
         raise MediaError(f"no frames decoded{': ' + stderr[-500:] if stderr else ''}")
+
+
+def decode_signals(path: str, alpha: bool = False) -> tuple[np.ndarray, np.ndarray, str]:
+    """Stream tiny grey frames from ffmpeg into motion/brightness signals.
+
+    Returns (motion, brightness, stderr_text).
+    """
+    builder = SignalBuilder()
+    stderr: list[str] = []
+    for frame in decode_frames(path, alpha, stderr_out=stderr):
+        builder.add(frame)
     motion, brightness = builder.finish()
-    return motion, brightness, stderr
+    return motion, brightness, "\n".join(stderr)
 
 
 def extract(path: str, max_duration: float) -> dict:

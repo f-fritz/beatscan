@@ -8,10 +8,12 @@ dist/
 .pytest_cache/
 
 # beatscan output (report, cache, debug plots)
-beatscan.csv
+beatscan*.csv
 *.cache.json
 *.cache.json.tmp
 plots/
+*_explained.ipynb
+.ipynb_checkpoints/
 
 # Video clips (large, not source)
 *.mov

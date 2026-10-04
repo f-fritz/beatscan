@@ -31,6 +31,16 @@ The directory is scanned recursively. Scanning `clips/` writes `beatscan_clips.c
 
 When a result looks wrong, run with `--plots DIR` and open that clip's PNG. It shows the motion and brightness signals with the reported beat grid, the cycles-per-clip spectrum, and the candidate scores with their implied BPM.
 
+## Walk through one clip
+
+```sh
+pip install -e '.[notebook]'
+beatscan-explain path/to/clip.mov            # writes ./clip_explained.ipynb
+beatscan-explain clip.mov -o nb.ipynb --bpm-range 100-140 --no-execute
+```
+
+Generates a Jupyter notebook that repeats each analysis step on one clip in its own cell: probe, decoded frames, motion and brightness signals, cycles-per-clip spectrum and scores, the candidate table with BPM and ranking, the frame at the start of each beat, the autocorrelation fallback, and the final row. The notebook is executed by default, so it opens with every plot already rendered. Open it in VS Code or Jupyter, change `PARAMS` in the first code cell, and re-run all cells to see how the options change the result.
+
 ## Report columns
 
 | Column | Meaning |
