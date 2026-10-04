@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# beatscan output (report, cache, debug plots)
+beatscan.csv
+*.cache.json
+*.cache.json.tmp
+plots/
+
+# Video clips (large, not source)
+*.mov
+*.mp4
+*.avi
+*.mkv
+*.webm
+*.m4v
+
+# macOS
+.DS_Store

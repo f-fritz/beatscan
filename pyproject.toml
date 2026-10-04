@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beatscan"
+version = "0.1.0"
+description = "Count beats per loop in VJ video clips"
+requires-python = ">=3.10"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+plots = ["matplotlib"]
+test = ["pytest"]
+
+[project.scripts]
+beatscan = "beatscan.cli:main"
+
+[tool.setuptools]
+packages = ["beatscan"]
